@@ -1,0 +1,6 @@
+{
+  "name": "Colnect URL Builder",
+  "description": "Dinamically build and launch Colnect coin lists URLs with validation, internet checking, and update alerts.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

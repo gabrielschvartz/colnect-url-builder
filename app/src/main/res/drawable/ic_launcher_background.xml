@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Background backdrop -->
+    <path
+        android:fillColor="#F8FAFC"
+        android:pathData="M0,0h108v108H0z" />
+    <!-- Waving Flag Ribbon Stripe 1: Celeste -->
+    <path
+        android:fillColor="#74ACDF"
+        android:pathData="M2,8 C22,8 20,40 45,40 C70,40 72,12 106,12 L106,30 C72,30 70,58 45,58 C20,58 22,26 2,26 Z" />
+    <!-- Waving Flag Ribbon Stripe 2: White -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M2,26 C22,26 20,58 45,58 C70,58 72,30 106,30 L106,44 C72,44 70,72 45,72 C20,72 22,40 2,40 Z" />
+    <!-- Waving Flag Ribbon Stripe 3: Celeste -->
+    <path
+        android:fillColor="#74ACDF"
+        android:pathData="M2,40 C22,40 20,72 45,72 C70,72 72,44 106,44 L106,62 C72,62 70,90 45,90 C20,90 22,58 2,58 Z" />
+    <!-- Yellow sun on white stripe center -->
+    <group
+        android:translateX="45"
+        android:translateY="50">
+        <!-- Sun center -->
+        <path
+            android:fillColor="#F59E0B"
+            android:pathData="M0,0m-3.5,0a3.5,3.5 0 1,1 7,0a3.5,3.5 0 1,1 -7,0" />
+        <!-- Sun rays -->
+        <path
+            android:fillColor="#F59E0B"
+            android:pathData="M0,-6 L0.5,-4 L-0.5,-4 Z
+                             M0,6 L0.5,4 L-0.5,4 Z
+                             M-6,0 L-4,0.5 L-4,-0.5 Z
+                             M6,0 L4,0.5 L4,-0.5 Z
+                             M-4,-4 L-2.8,-2.8 L-3.5,-2.1 Z
+                             M4,4 L2.8,2.8 L3.5,2.1 Z
+                             M-4,4 L-2.8,2.8 L-3.5,2.1 Z
+                             M4,-4 L2.8,-2.8 L3.5,-2.1 Z" />
+    </group>
+</vector>

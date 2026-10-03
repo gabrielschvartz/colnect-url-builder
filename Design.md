@@ -100,6 +100,21 @@ La aplicación está completamente adaptada para funcionar en dispositivos móvi
 
 ---
 
+## Resolución de Firma y Compilación Local (Keystore)
+
+Al clonar o exportar el proyecto a un entorno local, el archivo `debug.keystore` se encuentra ignorado en `.gitignore` por seguridad, pero el repositorio incluye `debug.keystore.base64`.
+* **Auto-restauración en Gradle:** `build.gradle.kts` (raíz) decodifica automáticamente `debug.keystore.base64` en `debug.keystore` si no existe en la carpeta raíz al compilar.
+* **Restauración manual (en Windows PowerShell):**
+  ```powershell
+  [System.IO.File]::WriteAllBytes("debug.keystore", [System.Convert]::FromBase64String((Get-Content "debug.keystore.base64" -Raw).Trim()))
+  ```
+* **Restauración manual (en Símbolo del Sistema / CMD):**
+  ```cmd
+  certutil -decode debug.keystore.base64 debug.keystore
+  ```
+
+---
+
 ## Mejoras y Correcciones Sugeridas para Futuras Versiones
 
 1. **Almacenamiento en Room Database (Opcional para Grandes Volúmenes):**

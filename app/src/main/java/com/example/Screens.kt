@@ -8,110 +8,55 @@ package com.example
 
 import android.content.Context
 import android.content.Intent
-import android.net.ConnectivityManager
-import android.net.NetworkCapabilities
 import android.net.Uri
-import android.os.Build
-import android.os.Bundle
 import android.provider.Browser
+import android.webkit.CookieManager
+import android.webkit.JavascriptInterface
+import android.webkit.WebChromeClient
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import android.widget.Toast
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
 import androidx.activity.compose.BackHandler
-import androidx.activity.enableEdgeToEdge
-import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.WindowInsetsControllerCompat
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.animation.core.*
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.focusable
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.draw.*
+import androidx.compose.ui.graphics.*
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.input.pointer.PointerEventPass
-import androidx.compose.ui.input.pointer.PointerInputChange
-import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.ui.platform.*
+import androidx.compose.ui.text.*
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Popup
-import androidx.compose.ui.window.PopupProperties
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.window.DialogProperties
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.ui.theme.MyApplicationTheme
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import okhttp3.Call
-import okhttp3.Callback
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.Response
-import java.io.IOException
-import java.io.File
-import java.text.Normalizer
-import android.webkit.WebView
-import android.webkit.WebViewClient
-import android.webkit.WebChromeClient
-import android.webkit.JavascriptInterface
-import android.webkit.CookieManager
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @Composable
 fun NoInternetFirstLaunchScreen(secondsRemaining: Int) {
@@ -582,6 +527,9 @@ fun MainLayoutScreen(
     val updateInfo by viewModel.updateInfo.collectAsStateWithLifecycle()
     val isConnected by viewModel.isInternetConnected.collectAsStateWithLifecycle()
     val displayVersion by viewModel.displayVersion.collectAsStateWithLifecycle()
+    val isDarkMode by viewModel.isDarkMode.collectAsStateWithLifecycle()
+    val showHistoryDialog by viewModel.showHistoryDialog.collectAsStateWithLifecycle()
+    val urlHistory by viewModel.urlHistory.collectAsStateWithLifecycle()
 
     var isCountryFocused by remember { mutableStateOf(false) }
     var isFaceValueFocused by remember { mutableStateOf(false) }
@@ -815,16 +763,20 @@ fun MainLayoutScreen(
         }
     }
 
+    if (showHistoryDialog) {
+        HistoryDialog(viewModel = viewModel)
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF3F4F9))
+            .background(if (isDarkMode) Color(0xFF000000) else Color(0xFFF3F4F9))
     ) {
         // 1. Top Status Bar Header (Material 3 style)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color.White.copy(alpha = 0.8f))
+                .background(if (isDarkMode) Color(0xFF121212) else Color.White.copy(alpha = 0.8f))
                 .padding(horizontal = 12.dp, vertical = 4.dp), // NO statusBarsPadding because Scaffold handles it; reduced padding
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
@@ -846,25 +798,65 @@ fun MainLayoutScreen(
                     text = if (isConnected) "CONECTADO" else "SIN CONEXIÓN",
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF64748B),
+                    color = if (isDarkMode) Color(0xFF9CA3AF) else Color(0xFF64748B),
                     letterSpacing = 1.sp
                 )
             }
 
-            Box(
-                modifier = Modifier
-                    .background(
-                        color = if (updateInfo.hasUpdate) Color(0xFFFEE2E2) else Color(0xFFEEF2F6),
-                        shape = RoundedCornerShape(100.dp)
-                    )
-                    .padding(horizontal = 6.dp, vertical = 0.5.dp)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                Text(
-                    text = if (updateInfo.hasUpdate) "$displayVersion ⚠" else "$displayVersion ✓",
-                    fontSize = 7.5.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = if (updateInfo.hasUpdate) Color(0xFFEF4444) else Color(0xFF0F766E)
-                )
+                // Historial button in Toolbar
+                IconButton(
+                    onClick = { viewModel.openHistoryDialog() },
+                    modifier = Modifier.size(28.dp)
+                ) {
+                    Box(contentAlignment = Alignment.TopEnd) {
+                        Icon(
+                            imageVector = Icons.Default.History,
+                            contentDescription = "Historial",
+                            tint = if (isDarkMode) Color(0xFF38BDF8) else Color(0xFF4F46E5),
+                            modifier = Modifier.size(20.dp)
+                        )
+                        if (urlHistory.isNotEmpty()) {
+                            Box(
+                                modifier = Modifier
+                                    .size(7.dp)
+                                    .background(Color(0xFFEF4444), CircleShape)
+                            )
+                        }
+                    }
+                }
+
+                // Dynamic Light / OLED Dark theme toggle
+                IconButton(
+                    onClick = { viewModel.toggleTheme(context) },
+                    modifier = Modifier.size(28.dp)
+                ) {
+                    Icon(
+                        imageVector = if (isDarkMode) Icons.Default.WbSunny else Icons.Default.NightsStay,
+                        contentDescription = "Alternar Tema",
+                        tint = if (isDarkMode) Color(0xFFFBBF24) else Color(0xFF334155),
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .background(
+                            color = if (updateInfo.hasUpdate) Color(0xFFFEE2E2) else if (isDarkMode) Color(0xFF27272A) else Color(0xFFEEF2F6),
+                            shape = RoundedCornerShape(100.dp)
+                        )
+                        .padding(horizontal = 6.dp, vertical = 0.5.dp)
+                ) {
+                    Text(
+                        text = if (updateInfo.hasUpdate) "$displayVersion ⚠" else "$displayVersion ✓",
+                        fontSize = 7.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (updateInfo.hasUpdate) Color(0xFFEF4444) else if (isDarkMode) Color(0xFF34D399) else Color(0xFF0F766E)
+                    )
+                }
             }
         }
 
@@ -873,24 +865,33 @@ fun MainLayoutScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(1.dp)
-                .background(Color(0xFFE2E8F0).copy(alpha = 0.5f))
+                .background(if (isDarkMode) Color(0xFF27272A) else Color(0xFFE2E8F0).copy(alpha = 0.5f))
         )
 
-        // 2. Middle Content Area (Taller & Centered when there is no preview)
-        val middleModifier = Modifier
-            .weight(1f)
-            .fillMaxWidth()
-            .verticalScroll(rememberScrollState())
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null
-            ) { focusManager.clearFocus() }
-            .padding(horizontal = 12.dp, vertical = 1.dp)
-
-        Column(
-            modifier = middleModifier,
-            verticalArrangement = Arrangement.spacedBy(3.dp)
+        // 2. Middle Content Area (Responsive width centering for Tablet & Web / Capacitor)
+        BoxWithConstraints(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth(),
+            contentAlignment = Alignment.TopCenter
         ) {
+            val isWideTablet = maxWidth >= 600.dp
+
+            val middleModifier = Modifier
+                .fillMaxHeight()
+                .widthIn(max = if (isWideTablet) 750.dp else 500.dp)
+                .verticalScroll(rememberScrollState())
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null
+                ) { focusManager.clearFocus() }
+                .padding(horizontal = if (isWideTablet) 24.dp else 12.dp, vertical = 1.dp)
+
+            Column(
+                modifier = middleModifier,
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(3.dp)
+            ) {
             // Dynamic top spacer which shrinks when any field is focused to shift all elements up,
             // or when the preview is being shown to optimize screen real estate.
             val topSpacerHeight = if (showPreview) 1.dp else 6.dp
@@ -902,7 +903,7 @@ fun MainLayoutScreen(
                 text = "Creador de Enlaces Colnect",
                 fontSize = titleFontSize,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF0F172A),
+                color = if (isDarkMode) Color(0xFFF8FAFC) else Color(0xFF0F172A),
                 letterSpacing = (-0.3).sp,
                 textAlign = TextAlign.Center,
                 maxLines = 1,
@@ -975,12 +976,14 @@ fun MainLayoutScreen(
                 Spacer(modifier = Modifier.height(2.dp))
             }
 
-            // White Form Card Block (rounded-[24px] instead of 32px for compact shape)
+            // Form Card Block
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
+                colors = CardDefaults.cardColors(
+                    containerColor = if (isDarkMode) Color(0xFF18181B) else Color.White
+                ),
                 shape = RoundedCornerShape(16.dp), // Compact rounded corners
-                border = BorderStroke(1.dp, Color(0xFFF1F5F9)),
+                border = BorderStroke(1.dp, if (isDarkMode) Color(0xFF27272A) else Color(0xFFF1F5F9)),
                 elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
             ) {
                 Column(
@@ -1005,7 +1008,8 @@ fun MainLayoutScreen(
                         ),
                         testTag = "country_input",
                         isExpanded = !showPreview,
-                        expandedHeight = 58.dp, // Comfortably compact when URL is not visible (increased 20%)
+                        expandedHeight = 58.dp,
+                        isDarkMode = isDarkMode,
                         onFocusChanged = { isCountryFocused = it }
                     )
 
@@ -1036,7 +1040,8 @@ fun MainLayoutScreen(
                                 ),
                                 testTag = "year_input",
                                 isExpanded = !showPreview,
-                                expandedHeight = 53.dp, // Comfortably compact when URL is not visible (increased 20%)
+                                expandedHeight = 53.dp,
+                                isDarkMode = isDarkMode,
                                 onFocusChanged = { isYearFocused = it }
                             )
                         }
@@ -1060,13 +1065,14 @@ fun MainLayoutScreen(
                                 ),
                                 testTag = "material_input",
                                 isExpanded = !showPreview,
-                                expandedHeight = 53.dp, // Comfortably compact when URL is not visible (increased 20%)
+                                expandedHeight = 53.dp,
+                                isDarkMode = isDarkMode,
                                 onFocusChanged = { isMaterialFocused = it }
                             )
                         }
                     }
 
-                    // Row showing Face Value and Diameter side-by-side (giving Face Value the same width and height as Diameter)
+                    // Row showing Face Value and Diameter side-by-side
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(16.dp)
@@ -1090,7 +1096,8 @@ fun MainLayoutScreen(
                                 ),
                                 testTag = "face_value_input",
                                 isExpanded = !showPreview,
-                                expandedHeight = 53.dp, // Comfortably compact when URL is not visible (increased 20%)
+                                expandedHeight = 53.dp,
+                                isDarkMode = isDarkMode,
                                 onFocusChanged = { isFaceValueFocused = it }
                             )
                         }
@@ -1116,7 +1123,8 @@ fun MainLayoutScreen(
                                 ),
                                 testTag = "diameter_input",
                                 isExpanded = !showPreview,
-                                expandedHeight = 53.dp, // Comfortably compact when URL is not visible (increased 20%)
+                                expandedHeight = 53.dp,
+                                isDarkMode = isDarkMode,
                                 onFocusChanged = { isDiameterFocused = it }
                             )
                         }
@@ -1141,6 +1149,7 @@ fun MainLayoutScreen(
                         testTag = "currency_input",
                         isExpanded = !showPreview,
                         expandedHeight = 53.dp,
+                        isDarkMode = isDarkMode,
                         onFocusChanged = { isCurrencyFocused = it }
                     )
 
@@ -1197,48 +1206,97 @@ fun MainLayoutScreen(
             }
 
             if (showPreview) {
-                Spacer(modifier = Modifier.height(3.dp)) // Tight spacing above the URL block to directly reduce empty space
+                Spacer(modifier = Modifier.height(3.dp))
 
-                // Indigo preview & CTA card
+                // Preview & CTA card
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
                         .shadow(2.dp, RoundedCornerShape(16.dp), ambientColor = Color(0xFF4F46E5).copy(alpha = 0.2f)),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFF4F46E5)),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (isDarkMode) Color(0xFF1E1B4B) else Color(0xFF4F46E5)
+                    ),
                     shape = RoundedCornerShape(16.dp)
                 ) {
                     Column(
-                        modifier = Modifier.padding(start = 12.dp, end = 12.dp, top = 8.dp, bottom = 8.dp), // Increased vertical padding
+                        modifier = Modifier.padding(start = 12.dp, end = 12.dp, top = 8.dp, bottom = 8.dp),
                         verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) { // Slightly increased layout spacing
-                            Text(
-                                text = "VISTA PREVIA DEL ENLACE",
-                                fontSize = 9.sp,
-                                fontWeight = FontWeight.Black,
-                                color = Color.White.copy(alpha = 0.6f),
-                                letterSpacing = 1.sp,
-                                fontFamily = FontFamily.Monospace,
-                                modifier = Modifier.padding(bottom = 0.dp)
-                            )
-                            Text(
-                                text = colnectUrl,
-                                fontSize = 10.5.sp, // Compact readable link text
-                                color = Color.White.copy(alpha = 0.95f),
-                                fontFamily = FontFamily.Monospace,
-                                lineHeight = 13.sp,
-                                modifier = Modifier.fillMaxWidth().padding(top = 2.dp)
+                        // Real-time URL title bar with live indicator & copy button
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(6.dp)
+                                        .background(Color(0xFF34D399), CircleShape)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "URL CONSTRUIDA EN TIEMPO REAL",
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = Color.White.copy(alpha = 0.75f),
+                                    letterSpacing = 0.8.sp,
+                                    fontFamily = FontFamily.Monospace
+                                )
+                            }
+
+                            IconButton(
+                                onClick = {
+                                    val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                                    val clip = android.content.ClipData.newPlainText("Colnect URL", colnectUrl)
+                                    clipboard.setPrimaryClip(clip)
+                                    android.widget.Toast.makeText(context, "URL copiada al portapapeles", android.widget.Toast.LENGTH_SHORT).show()
+                                },
+                                modifier = Modifier.size(22.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.ContentCopy,
+                                    contentDescription = "Copiar URL",
+                                    tint = Color.White.copy(alpha = 0.9f),
+                                    modifier = Modifier.size(13.dp)
+                                )
+                            }
+                        }
+
+                        // Small, non-editable text display showing the constructed URL in real-time
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(Color.Black.copy(alpha = 0.25f), RoundedCornerShape(8.dp))
+                                .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(8.dp))
+                                .padding(horizontal = 10.dp, vertical = 6.dp)
+                        ) {
+                            androidx.compose.foundation.text.BasicTextField(
+                                value = colnectUrl,
+                                onValueChange = {}, // Read-only / Non-editable
+                                readOnly = true,
+                                textStyle = androidx.compose.ui.text.TextStyle(
+                                    fontSize = 11.sp,
+                                    color = Color(0xFFF1F5F9),
+                                    fontFamily = FontFamily.Monospace,
+                                    fontWeight = FontWeight.Medium,
+                                    lineHeight = 14.sp
+                                ),
+                                modifier = Modifier.fillMaxWidth()
                             )
                         }
 
-                        // Shifted down: Dedicated Spacer to leave more space between the url and the button itself.
-                        Spacer(modifier = Modifier.height(10.dp))
+                        Spacer(modifier = Modifier.height(4.dp))
 
-                        // Open in Colnect Button (Primary, single full width) - highlighted and prominent with vivid brand gold accents
-                        // Greyed out and disabled completely when no internet connection is active
+                        // Open in Colnect Button
                         Button(
                             onClick = {
                                 focusManager.clearFocus()
+                                val summary = listOf(countrySelected, yearSelected, materialSelected, faceValueSelected, currencySelected)
+                                    .filter { it.isNotBlank() }
+                                    .joinToString(" | ")
+                                viewModel.addUrlToHistory(context, colnectUrl, if (summary.isEmpty()) "Búsqueda general" else summary)
+
                                 if (viewModel.checkNetwork(context)) {
                                     val activeUrl = viewModel.activeWebViewUrl.value
                                     if (onNavigateToWebView != null && activeUrl != null && activeUrl == colnectUrl) {
@@ -1252,10 +1310,10 @@ fun MainLayoutScreen(
                             },
                             enabled = isSendEnabled && isConnected,
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFFFBBF24), // Vivid gold-amber, extremely destacados!
-                                contentColor = Color(0xFF0F172A), // High contrast dark slate for clear readability
-                                disabledContainerColor = Color(0xFF94A3B8).copy(alpha = 0.8f), // Prominent grey container when offline
-                                disabledContentColor = Color(0xFFF1F5F9).copy(alpha = 0.7f) // Ultra clear disabled slate contrast
+                                containerColor = Color(0xFFFBBF24), // Vivid gold-amber
+                                contentColor = Color(0xFF0F172A), // High contrast dark slate
+                                disabledContainerColor = Color(0xFF94A3B8).copy(alpha = 0.8f),
+                                disabledContentColor = Color(0xFFF1F5F9).copy(alpha = 0.7f)
                             ),
                             elevation = ButtonDefaults.buttonElevation(
                                 defaultElevation = 3.dp,
@@ -1263,10 +1321,10 @@ fun MainLayoutScreen(
                                 disabledElevation = 0.dp
                             ),
                             shape = RoundedCornerShape(10.dp),
-                            contentPadding = PaddingValues(0.dp), // Zero padding tells Compose to center completely
+                            contentPadding = PaddingValues(0.dp),
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(38.dp) // Compact size
+                                .height(38.dp)
                                 .testTag("submit_button")
                         ) {
                             Row(
@@ -1295,6 +1353,7 @@ fun MainLayoutScreen(
             if (!showPreview && !isAnyFieldFocused) {
                 Spacer(modifier = Modifier.height(28.dp)) // Nudge entire group upwards when there is no preview shown and keyboard is hidden
             }
+        }
         }
 
         // 3. Footer Logo area

@@ -7,31 +7,14 @@ package com.example
 
 
 import android.content.Context
-import android.content.Intent
-import android.net.ConnectivityManager
-import android.net.NetworkCapabilities
 import android.net.Uri
-import android.os.Build
-import android.os.Bundle
-import android.provider.Browser
-import android.widget.Toast
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.compose.BackHandler
-import androidx.activity.enableEdgeToEdge
-import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.WindowInsetsControllerCompat
+import android.webkit.WebView
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.animation.core.*
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -40,39 +23,25 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.draw.*
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.*
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.input.pointer.PointerEventPass
-import androidx.compose.ui.input.pointer.PointerInputChange
-import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.*
+import androidx.compose.ui.text.*
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -81,37 +50,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.window.DialogProperties
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.ui.theme.MyApplicationTheme
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import okhttp3.Call
-import okhttp3.Callback
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.Response
-import java.io.IOException
-import java.io.File
-import java.text.Normalizer
-import android.webkit.WebView
-import android.webkit.WebViewClient
-import android.webkit.WebChromeClient
-import android.webkit.JavascriptInterface
-import android.webkit.CookieManager
-import androidx.compose.ui.viewinterop.AndroidView
 
 @Composable
 fun DiagnosticItemRow(label: String, current: Int, target: Int) {
@@ -178,6 +117,7 @@ fun ValidatedInputField(
     testTag: String,
     isExpanded: Boolean = false,
     expandedHeight: androidx.compose.ui.unit.Dp = 53.dp, // Compact default height (increased 20%)
+    isDarkMode: Boolean = false,
     onFocusChanged: (Boolean) -> Unit = {}
 ) {
     var isFocused by remember { mutableStateOf(false) }
@@ -205,17 +145,24 @@ fun ValidatedInputField(
 
     val borderColor = when (validationState) {
         ValidationState.Neutral -> {
-            if (isFocused) Color(0xFF4F46E5) else Color(0xFFCBD5E1)
+            if (isFocused) {
+                if (isDarkMode) Color(0xFF38BDF8) else Color(0xFF4F46E5)
+            } else {
+                if (isDarkMode) Color(0xFF3F3F46) else Color(0xFFCBD5E1)
+            }
         }
         ValidationState.Valid -> Color(0xFF10B981)
         ValidationState.Invalid -> Color(0xFFEF4444)
     }
 
     val internalBg = when (validationState) {
-        ValidationState.Neutral -> Color(0xFFF8FAFC)
-        ValidationState.Valid -> Color(0xFFECFDF5)
-        ValidationState.Invalid -> Color(0xFFFEF2F2)
+        ValidationState.Neutral -> if (isDarkMode) Color(0xFF27272A) else Color(0xFFF8FAFC)
+        ValidationState.Valid -> if (isDarkMode) Color(0xFF064E3B) else Color(0xFFECFDF5)
+        ValidationState.Invalid -> if (isDarkMode) Color(0xFF7F1D1D) else Color(0xFFFEF2F2)
     }
+
+    val textColor = if (isDarkMode) Color(0xFFF8FAFC) else Color.Black
+    val placeholderColor = if (isDarkMode) Color(0xFFA1A1AA) else Color(0xFF64748B)
 
     Column(
         modifier = Modifier
@@ -227,7 +174,7 @@ fun ValidatedInputField(
             modifier = Modifier
                 .padding(start = 4.dp, bottom = 1.dp), // Tiny bottom padding for space efficiency
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF94A3B8),
+            color = if (isDarkMode) Color(0xFF9CA3AF) else Color(0xFF94A3B8),
             fontSize = 9.5.sp, // Slightly more compact label
             letterSpacing = 0.8.sp
         )
@@ -239,11 +186,11 @@ fun ValidatedInputField(
                     .fillMaxWidth()
                     .height(currentHeight) // Animated height
                     .shadow(
-                        elevation = 5.dp, // Sombra sutil y más alta para dar efecto resaltado
+                        elevation = if (isDarkMode) 2.dp else 5.dp,
                         shape = RoundedCornerShape(10.dp),
                         clip = false,
-                        ambientColor = Color(0xFF1E293B).copy(alpha = 0.12f),
-                        spotColor = Color(0xFF1E293B).copy(alpha = 0.16f)
+                        ambientColor = if (isDarkMode) Color.Black else Color(0xFF1E293B).copy(alpha = 0.12f),
+                        spotColor = if (isDarkMode) Color.Black else Color(0xFF1E293B).copy(alpha = 0.16f)
                     )
                     .background(internalBg, RoundedCornerShape(10.dp))
                     .border(1.dp, borderColor, RoundedCornerShape(10.dp))
@@ -262,7 +209,7 @@ fun ValidatedInputField(
                         if (value.isEmpty()) {
                             Text(
                                 text = placeholder,
-                                color = Color(0xFF64748B),
+                                color = placeholderColor,
                                 fontSize = 11.sp, // Slightly compact to guarantee it never overflows in dual layout
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
@@ -274,7 +221,7 @@ fun ValidatedInputField(
                             textStyle = androidx.compose.ui.text.TextStyle(
                                 fontSize = 11.5.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color.Black
+                                color = textColor
                             ),
                             singleLine = true,
                             keyboardOptions = keyboardOptions,
@@ -295,7 +242,7 @@ fun ValidatedInputField(
                             Icon(
                                 imageVector = Icons.Default.Clear,
                                 contentDescription = "Borrar campo",
-                                tint = Color(0xFF475569),
+                                tint = if (isDarkMode) Color(0xFFA1A1AA) else Color(0xFF475569),
                                 modifier = Modifier.size(13.dp)
                             )
                         }
@@ -972,6 +919,244 @@ fun canWebViewGoBackSafely(webView: WebView?): Boolean {
         }
     }
     return true
+}
+
+/**
+ * Modal dialog presenting the list of generated Colnect URLs for inspection, copying, and re-opening.
+ *
+ * @param viewModel Shared [ColnectViewModel] instance.
+ */
+@Composable
+fun HistoryDialog(viewModel: ColnectViewModel) {
+    Config.logFunctionCall("Components.kt", "HistoryDialog")
+    val context = LocalContext.current
+    val historyList by viewModel.urlHistory.collectAsStateWithLifecycle()
+    val isDarkMode by viewModel.isDarkMode.collectAsStateWithLifecycle()
+
+    val dialogBg = if (isDarkMode) Color(0xFF18181B) else Color.White
+    val textColor = if (isDarkMode) Color(0xFFF8FAFC) else Color(0xFF0F172A)
+    val cardBg = if (isDarkMode) Color(0xFF27272A) else Color(0xFFF8FAFC)
+    val borderColor = if (isDarkMode) Color(0xFF3F3F46) else Color(0xFFE2E8F0)
+
+    androidx.compose.ui.window.Dialog(
+        onDismissRequest = { viewModel.closeHistoryDialog() },
+        properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth(0.92f)
+                .fillMaxHeight(0.85f)
+                .padding(12.dp),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = dialogBg),
+            elevation = CardDefaults.cardElevation(defaultElevation = 10.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp)
+            ) {
+                // Header row
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.History,
+                            contentDescription = "Historial",
+                            tint = if (isDarkMode) Color(0xFF38BDF8) else Color(0xFF4F46E5),
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Historial de URLs",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = textColor
+                        )
+                    }
+                    IconButton(onClick = { viewModel.closeHistoryDialog() }) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Cerrar",
+                            tint = if (isDarkMode) Color(0xFF9CA3AF) else Color(0xFF64748B)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                if (historyList.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(
+                                imageVector = Icons.Default.History,
+                                contentDescription = null,
+                                tint = if (isDarkMode) Color(0xFF52525B) else Color(0xFFCBD5E1),
+                                modifier = Modifier.size(48.dp)
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Aún no hay URLs en el historial.",
+                                fontSize = 14.sp,
+                                color = if (isDarkMode) Color(0xFF9CA3AF) else Color(0xFF64748B)
+                            )
+                            Text(
+                                text = "Las URLs que generes aparecerán aquí para ser reutilizadas.",
+                                fontSize = 12.sp,
+                                color = if (isDarkMode) Color(0xFF71717A) else Color(0xFF94A3B8),
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.padding(horizontal = 24.dp, vertical = 4.dp)
+                            )
+                        }
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        items(historyList, key = { it.id }) { item ->
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = CardDefaults.cardColors(containerColor = cardBg),
+                                border = BorderStroke(1.dp, borderColor)
+                            ) {
+                                Column(modifier = Modifier.padding(12.dp)) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = item.summary,
+                                            fontSize = 13.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (isDarkMode) Color(0xFF38BDF8) else Color(0xFF0F3B6C),
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                        IconButton(
+                                            onClick = { viewModel.deleteHistoryItem(context, item.id) },
+                                            modifier = Modifier.size(24.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Delete,
+                                                contentDescription = "Eliminar",
+                                                tint = Color(0xFFEF4444),
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                        }
+                                    }
+
+                                    Spacer(modifier = Modifier.height(4.dp))
+
+                                    Text(
+                                        text = item.url,
+                                        fontSize = 11.sp,
+                                        fontFamily = FontFamily.Monospace,
+                                        color = if (isDarkMode) Color(0xFFE2E8F0) else Color(0xFF334155),
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+
+                                    Spacer(modifier = Modifier.height(8.dp))
+
+                                    val dateFormat = remember { java.text.SimpleDateFormat("dd/MM/yyyy HH:mm", java.util.Locale.getDefault()) }
+                                    val dateStr = dateFormat.format(java.util.Date(item.timestamp))
+
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = dateStr,
+                                            fontSize = 10.sp,
+                                            color = if (isDarkMode) Color(0xFF71717A) else Color(0xFF94A3B8)
+                                        )
+
+                                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                            // Copy button
+                                            OutlinedButton(
+                                                onClick = {
+                                                    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                                                    val clip = android.content.ClipData.newPlainText("Colnect URL", item.url)
+                                                    clipboard.setPrimaryClip(clip)
+                                                    android.widget.Toast.makeText(context, "URL copiada al portapapeles", android.widget.Toast.LENGTH_SHORT).show()
+                                                },
+                                                shape = RoundedCornerShape(8.dp),
+                                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp),
+                                                modifier = Modifier.height(30.dp)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.ContentCopy,
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(12.dp)
+                                                )
+                                                Spacer(modifier = Modifier.width(4.dp))
+                                                Text("Copiar", fontSize = 11.sp)
+                                            }
+
+                                            // Open / Reuse button
+                                            Button(
+                                                onClick = {
+                                                    viewModel.loadUrlFromHistory(context, item)
+                                                },
+                                                colors = ButtonDefaults.buttonColors(
+                                                    containerColor = if (isDarkMode) Color(0xFF38BDF8) else Color(0xFF4F46E5)
+                                                ),
+                                                shape = RoundedCornerShape(8.dp),
+                                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp),
+                                                modifier = Modifier.height(30.dp)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.OpenInNew,
+                                                    contentDescription = null,
+                                                    tint = Color.White,
+                                                    modifier = Modifier.size(12.dp)
+                                                )
+                                                Spacer(modifier = Modifier.width(4.dp))
+                                                Text("Abrir", fontSize = 11.sp, color = Color.White, fontWeight = FontWeight.Bold)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    OutlinedButton(
+                        onClick = { viewModel.clearHistory(context) },
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFEF4444)),
+                        border = BorderStroke(1.dp, Color(0xFFEF4444)),
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.DeleteForever,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Borrar Todo el Historial", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
+    }
 }
 
 
